@@ -1,0 +1,9 @@
+{
+    "id" : "EmoteSystem",
+    "version" : "0.1.0-SNAPSHOT",
+    "author" : "",
+    "displayName" : "EmoteSystem",
+    "description" : "",
+    "dependencies" : [],
+    "serverSideOnly" : false
+}
