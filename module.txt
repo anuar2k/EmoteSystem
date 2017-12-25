@@ -1,9 +1,9 @@
 {
     "id" : "EmoteSystem",
     "version" : "0.1.0-SNAPSHOT",
-    "author" : "",
+    "author" : "anuar2k",
     "displayName" : "EmoteSystem",
-    "description" : "",
+    "description" : "Allows users to express emotions and other modules to register new emotion types!",
     "dependencies" : [],
     "serverSideOnly" : false
 }
