@@ -1,4 +1,10 @@
 package org.terasology.emoteSystem.ui;
 
-public class EmoteConfig {
+import org.terasology.rendering.nui.CoreScreenLayer;
+
+public class EmoteConfig extends CoreScreenLayer {
+    @Override
+    public void initialise() {
+
+    }
 }

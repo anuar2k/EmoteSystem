@@ -1,0 +1,17 @@
+{
+    "type": "EmoteConfig",
+    "contents": {
+        "type": "relativeLayout",
+        "contents": [
+            {
+                "type": "UILabel",
+                "text": "This is the placeholder for future menu allowing to enable/disable registered emotes.\nUse escape key to hide this screen.",
+                "layoutInfo": {
+                    "position-horizontal-center": {},
+                    "position-vertical-center": {},
+                    "use-content-height": true
+                }
+            }
+        ]
+    }
+}
