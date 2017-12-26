@@ -3,7 +3,10 @@ package org.terasology.emoteSystem.system;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terasology.emoteSystem.bind.EmoteConfigButton;
+import org.terasology.emoteSystem.bind.EmoteScreenButton;
 import org.terasology.emoteSystem.component.EmoteComponent;
+import org.terasology.emoteSystem.event.EmoteSelectedEvent;
+import org.terasology.emoteSystem.ui.EmoteScreen;
 import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.ReceiveEvent;
 import org.terasology.entitySystem.prefab.Prefab;
@@ -12,8 +15,6 @@ import org.terasology.entitySystem.systems.BaseComponentSystem;
 import org.terasology.entitySystem.systems.RegisterMode;
 import org.terasology.entitySystem.systems.RegisterSystem;
 import org.terasology.input.ButtonState;
-import org.terasology.input.Keyboard;
-import org.terasology.input.events.KeyEvent;
 import org.terasology.logic.chat.ChatMessageEvent;
 import org.terasology.network.ClientComponent;
 import org.terasology.registry.In;
@@ -36,6 +37,8 @@ public class EmoteSystem extends BaseComponentSystem {
     NUIManager nuiManager;
 
     private Map<String, EmoteComponent> loadedEmotes = new HashMap<>();
+    private EmoteScreen emoteScreen;
+    private FastRandom fastRandom = new FastRandom();
 
     //TODO: Will use FlexibleConfigs when they will be available.
     /*
@@ -53,34 +56,25 @@ public class EmoteSystem extends BaseComponentSystem {
         //loadSettingsFile(); - //TODO: Will use FlexibleConfigs when they will be available.
     }
 
-    //TODO: Toggled screen steals KeyEvent for its NUIKeyEvent, so it's not possible to retrieve EmoteScreenButton.
     @ReceiveEvent(components = ClientComponent.class)
-    public void onEmoteScreenButton(KeyEvent event, EntityRef entity) {
-        if (event.getKey() == Keyboard.Key.C) {
-            switch (event.getState()) {
-                case DOWN:
-                    nuiManager.toggleScreen(UI_EMOTE_SCREEN);
-                    break;
-                case UP:
-                    int random = new FastRandom().nextInt();
-                    random = (random < 0) ? (random+Integer.MAX_VALUE) % loadedEmotes.size() : random % loadedEmotes.size();
-
-                    int entryNumber = 0;
-                    for (Map.Entry<String, EmoteComponent> entry : loadedEmotes.entrySet()) {
-                        if (entryNumber == random) {
-                            EmoteComponent emote = entry.getValue();
-                            entity.send(new ChatMessageEvent(emote.message, entity.getComponent(ClientComponent.class).clientInfo));
-                            break;
-                        }
-                        entryNumber++;
-                    }
-
-                    nuiManager.closeScreen(UI_EMOTE_SCREEN);
-                    break;
-                case REPEAT:
-                    break;
-            }
+    public void onEmoteScreenButton(EmoteScreenButton event, EntityRef entity) {
+        getScreen();
+        switch (event.getState()) {
+            case DOWN:
+                nuiManager.toggleScreen(UI_EMOTE_SCREEN);
+                EmoteScreen emoteScreen = (EmoteScreen)nuiManager.getScreen(UI_EMOTE_SCREEN);
+                emoteScreen.setEmotes(loadedEmotes);
+                emoteScreen.setEntity(entity);
+                break;
+            case UP:
+                nuiManager.closeScreen(UI_EMOTE_SCREEN);
+                break;
         }
+    }
+
+    @ReceiveEvent(components = ClientComponent.class)
+    public void showEmote(EmoteSelectedEvent event, EntityRef entity) {
+        entity.send(new ChatMessageEvent(loadedEmotes.get(event.getEmoteID()).message, entity.getComponent(ClientComponent.class).clientInfo));
     }
 
     @ReceiveEvent(components = ClientComponent.class)
@@ -88,8 +82,13 @@ public class EmoteSystem extends BaseComponentSystem {
         if (event.getState() != ButtonState.DOWN) {
             return;
         }
-
         nuiManager.toggleScreen(UI_EMOTE_CONFIG);
+    }
+
+    private void getScreen() {
+        if (emoteScreen != null) {
+            emoteScreen = (EmoteScreen)nuiManager.getScreen(UI_EMOTE_SCREEN);
+        }
     }
 
     //TODO: Allow user to open up configuration screen and activate/deactivate emotes. Not possible at the time as key classes needed for this system are disallowed by ModuleClassLoader; waiting for FlexibleConfigs release.

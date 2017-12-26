@@ -4,13 +4,28 @@
         "type": "relativeLayout",
         "contents": [
             {
-                "type": "UILabel",
-                "text": "This is the placeholder for future RadialRing showing available emotes.\nCurrently, using C key shows a random registered emote.",
+                "type": "UIRadialRing",
+                "id": "ring",
                 "layoutInfo": {
                     "position-horizontal-center": {},
                     "position-vertical-center": {},
-                    "use-content-height": true
-                }
+                    "width": 600,
+                    "height": 600
+                },
+                "sections": [
+                    {
+                        "type": "UIRadialSection",
+                        "text": "One"
+                    },
+                    {
+                        "type": "UIRadialSection",
+                        "text": "Two"
+                    },
+                    {
+                        "type": "UIRadialSection",
+                        "text": "Three"
+                    }
+                ]
             }
         ]
     }
