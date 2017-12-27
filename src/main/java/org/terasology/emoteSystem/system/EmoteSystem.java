@@ -19,32 +19,36 @@ import org.terasology.logic.chat.ChatMessageEvent;
 import org.terasology.network.ClientComponent;
 import org.terasology.registry.In;
 import org.terasology.rendering.nui.NUIManager;
-import org.terasology.utilities.random.FastRandom;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * System covering most of the module's functionality. Loads EmoteComponents from prefabs and handles all events.
+ * @author anuar2k
+ */
+//TODO: Create settings system to enable/disable emotes. Waiting for FlexibleConfig's release for that.
 @RegisterSystem(RegisterMode.CLIENT)
 public class EmoteSystem extends BaseComponentSystem {
     private static final Logger logger = LoggerFactory.getLogger(EmoteSystem.class);
-    private static final String UI_EMOTE_SCREEN = "EmoteSystem:EmoteScreen";
-    private static final String UI_EMOTE_CONFIG = "EmoteSystem:EmoteConfig";
+    private static final String EMOTE_SCREEN = "EmoteSystem:EmoteScreen";
+    private static final String EMOTE_CONFIG = "EmoteSystem:EmoteConfig";
 
     @In
     PrefabManager prefabManager;
     @In
     NUIManager nuiManager;
 
+    /**
+     * A map of prefab's name and EmoteComponent, used to manage emotes by its prefab's name.
+     */
     private Map<String, EmoteComponent> loadedEmotes = new HashMap<>();
-    private EmoteScreen emoteScreen;
-    private FastRandom fastRandom = new FastRandom();
 
-    //TODO: Will use FlexibleConfigs when they will be available.
-    /*
-    private Map<String, Boolean> emoteSettings = new HashMap<>();
-    */
-
+    /**
+     * This method is called when all required modules are loaded (during the world loading).
+     * It searches for all prefabs containing {@link EmoteComponent} and puts the components into a HashMap of prefab's name and corresponding component.
+     */
     @Override
     public void preBegin() {
         Collection<Prefab> emotePrefabs = prefabManager.listPrefabs(EmoteComponent.class);
@@ -53,92 +57,50 @@ public class EmoteSystem extends BaseComponentSystem {
             loadedEmotes.put(prefab.getName(), emote);
             logger.info("Registered emote ID: {} | message: {}", prefab.getName(), emote.message);
         }
-        //loadSettingsFile(); - //TODO: Will use FlexibleConfigs when they will be available.
     }
 
-    @ReceiveEvent(components = ClientComponent.class)
-    public void onEmoteScreenButton(EmoteScreenButton event, EntityRef entity) {
-        getScreen();
-        switch (event.getState()) {
-            case DOWN:
-                nuiManager.toggleScreen(UI_EMOTE_SCREEN);
-                EmoteScreen emoteScreen = (EmoteScreen)nuiManager.getScreen(UI_EMOTE_SCREEN);
-                emoteScreen.setEmotes(loadedEmotes);
-                emoteScreen.setEntity(entity);
-                break;
-            case UP:
-                nuiManager.closeScreen(UI_EMOTE_SCREEN);
-                break;
-        }
-    }
-
+    /**
+     * Receives {@link EmoteSelectedEvent} called by {@link EmoteScreen} to send a chat message.
+     * @param event called by {@link EmoteScreen}
+     * @param entity of the client.
+     */
     @ReceiveEvent(components = ClientComponent.class)
     public void showEmote(EmoteSelectedEvent event, EntityRef entity) {
         entity.send(new ChatMessageEvent(loadedEmotes.get(event.getEmoteID()).message, entity.getComponent(ClientComponent.class).clientInfo));
     }
 
+    /**
+     * Receives {@link EmoteScreenButton} event to open emote selection screen.
+     * @param event called on button press.
+     * @param entity of the client.
+     */
+    @ReceiveEvent(components = ClientComponent.class)
+    public void onEmoteScreenButton(EmoteScreenButton event, EntityRef entity) {
+        switch (event.getState()) {
+            case DOWN:
+                nuiManager.toggleScreen(EMOTE_SCREEN);
+                EmoteScreen emoteScreen = (EmoteScreen)nuiManager.getScreen(EMOTE_SCREEN);
+                //push the map of emotes used to create the screen
+                emoteScreen.setEmotes(loadedEmotes);
+                //push the client entity to the screen to call the EmoteSelectedEvent from it.
+                emoteScreen.setEntity(entity);
+                break;
+            case UP:
+                nuiManager.closeScreen(EMOTE_SCREEN);
+                break;
+        }
+    }
+
+    /**
+     * Receives {@link EmoteConfigButton} event to open configuration screen (currently just a dummy).
+     * @param event called on button press.
+     * @param entity of the client.
+     */
     @ReceiveEvent(components = ClientComponent.class)
     public void onEmoteConfigButton(EmoteConfigButton event, EntityRef entity) {
         if (event.getState() != ButtonState.DOWN) {
             return;
         }
-        nuiManager.toggleScreen(UI_EMOTE_CONFIG);
+        nuiManager.toggleScreen(EMOTE_CONFIG);
     }
-
-    private void getScreen() {
-        if (emoteScreen != null) {
-            emoteScreen = (EmoteScreen)nuiManager.getScreen(UI_EMOTE_SCREEN);
-        }
-    }
-
-    //TODO: Allow user to open up configuration screen and activate/deactivate emotes. Not possible at the time as key classes needed for this system are disallowed by ModuleClassLoader; waiting for FlexibleConfigs release.
-    /*
-    private void loadSettingsFile() {
-        try {
-            String settingsStr = new String(Files.readAllBytes(getPath()));
-            JsonObject settingsObj = new JsonParser().parse(settingsStr).getAsJsonObject();
-
-            for (Map.Entry<String, JsonElement> entry : settingsObj.entrySet()) {
-                emoteSettings.put(entry.getKey(), entry.getValue().getAsBoolean());
-            }
-
-            for (String key: loadedEmotes.keySet()) {
-                emoteSettings.putIfAbsent(key, true);
-            }
-
-            logger.info("loaded file!");
-            saveSettingsFile();
-        } catch (Exception e) {
-            logger.info("load failed");
-
-            emoteSettings = new HashMap<>();
-
-            for (String key: loadedEmotes.keySet()) {
-                emoteSettings.put(key, true);
-            }
-
-            saveSettingsFile();
-        }
-    }
-
-    private void saveSettingsFile() {
-        try {
-            JsonObject settingsObj = new JsonObject();
-
-            for (Map.Entry<String, Boolean> entry : emoteSettings.entrySet()) {
-                settingsObj.addProperty(entry.getKey(), entry.getValue());
-            }
-
-            String settingsStr = settingsObj.toString();
-            Files.write(getPath(), settingsStr.getBytes());
-            logger.info("saved file!");
-        } catch (Exception e) {
-            logger.error(e.toString());
-        }
-    }
-
-    private Path getPath() {
-        return PathManager.getInstance().getHomePath().resolve("emoteSettings.json");
-    }
-    */
 }

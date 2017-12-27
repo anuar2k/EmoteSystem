@@ -1,7 +1,5 @@
 package org.terasology.emoteSystem.ui;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terasology.emoteSystem.component.EmoteComponent;
 import org.terasology.emoteSystem.event.EmoteSelectedEvent;
 import org.terasology.entitySystem.entity.EntityRef;
@@ -10,15 +8,20 @@ import org.terasology.rendering.nui.widgets.UIRadialRing;
 import org.terasology.rendering.nui.widgets.UIRadialSection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Screen used to select one of the registered emotes.
+ * @author anuar2k
+ */
 public class EmoteScreen extends CoreScreenLayer {
-    private static final Logger logger = LoggerFactory.getLogger(EmoteScreen.class);
-    private List<String> idList = new ArrayList<>();
-
     private UIRadialRing ring;
+
+    /**
+     * List used to bind together UIRadialSection's index with emote's ID.
+     */
+    private List<String> idList = new ArrayList<>();
     private EntityRef entity;
 
     @Override
@@ -26,19 +29,9 @@ public class EmoteScreen extends CoreScreenLayer {
         ring = find("ring", UIRadialRing.class);
     }
 
-    @Override
-    public boolean isModal() {
-        return false;
-    }
-
-    @Override
-    public void onClosed() {
-        int selectedTab = ring.getSelectedTab();
-        if (selectedTab >= 0) {
-            entity.send(new EmoteSelectedEvent(idList.get(ring.getSelectedTab())));
-        }
-    }
-
+    /**
+     * Creates a list of UIRadialSections based on loadedEmotes map supplied by {@link org.terasology.emoteSystem.system.EmoteSystem}.
+     */
     public void setEmotes(Map<String, EmoteComponent> emotesToShow) {
         List<UIRadialSection> newSections = new ArrayList<>();
 
@@ -53,7 +46,24 @@ public class EmoteScreen extends CoreScreenLayer {
         ring.setSections(newSections);
     }
 
+    /**
+     * Gets the entity used to call {@link EmoteSelectedEvent} from it.
+     * @param entity of the client.
+     */
     public void setEntity(EntityRef entity) {
         this.entity = entity;
+    }
+
+    @Override
+    public void onClosed() {
+        int selectedTab = ring.getSelectedTab();
+        if (selectedTab >= 0) {
+            entity.send(new EmoteSelectedEvent(idList.get(ring.getSelectedTab())));
+        }
+    }
+
+    @Override
+    public boolean isModal() {
+        return false;
     }
 }

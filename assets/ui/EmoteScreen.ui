@@ -11,21 +11,7 @@
                     "position-vertical-center": {},
                     "width": 600,
                     "height": 600
-                },
-                "sections": [
-                    {
-                        "type": "UIRadialSection",
-                        "text": "One"
-                    },
-                    {
-                        "type": "UIRadialSection",
-                        "text": "Two"
-                    },
-                    {
-                        "type": "UIRadialSection",
-                        "text": "Three"
-                    }
-                ]
+                }
             }
         ]
     }
